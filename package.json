@@ -1,7 +1,7 @@
 {
-  "name": "@leakeddave/my-jsx-package",
-  "homepage": "https://github.com/LeakedDave/my-jsx-package",
-  "version": "1.0.3",
+  "name": "@daveyplate/supabase-auth-nextui",
+  "homepage": "https://github.com/daveyplate/supabase-auth-nextui",
+  "version": "1.0.0",
   "description": "",
   "module": "dist/index",
   "types": "dist/index",
@@ -11,24 +11,30 @@
   ],
   "scripts": {
     "build": "babel src --out-dir dist && npx tsc",
-    "dev": "nodemon --exec 'npm run build'",
+    "dev": "nodemon --watch src --exec 'npm run build'",
     "prepublishOnly": "npm run build"
   },
   "keywords": [],
-  "author": "LeakedDave",
+  "author": "daveycodez",
   "license": "ISC",
   "devDependencies": {
     "@babel/cli": "^7.25.7",
     "@babel/core": "^7.25.7",
     "@babel/preset-env": "^7.25.7",
     "@babel/preset-react": "^7.25.7",
+    "@types/react": "^18.3.12",
     "nodemon": "^3.1.7",
     "react": "file:../daveyplate/node_modules/react",
     "swr": "file:../daveyplate/node_modules/swr",
     "typescript": "^5.6.2"
   },
   "peerDependencies": {
+    "@iconify/react": ">=5.0.0",
+    "@nextui-org/react": ">=2.4.8",
+    "next": ">=14.0.0",
     "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "react-dom": ">=18.0.0",
+    "@supabase/supabase-js": ">=2.44.0",
+    "@uidotdev/usehooks": ">=2.4.0"
   }
 }
