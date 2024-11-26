@@ -1,72 +1,136 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { Button, Input, Link, Divider, Card, CardBody, cn, CardHeader, CardFooter } from "@nextui-org/react"
 import { useRouter } from "next/router"
 import { SupabaseClient } from "@supabase/supabase-js"
 import { authProviders } from "./auth-providers"
 import { useIsHydrated } from "./use-is-hydrated"
+import { Icon } from "@iconify/react"
+
+/**
+ * @typedef {Object} AuthLocalization
+ * @property {string} [header_text_login="Log In"]
+ * @property {string} [header_text_signup="Sign Up"]
+ * @property {string} [header_text_forgot_password="Forgot Password"]
+ * @property {string} [header_text_update_password="Update Password"]
+ * @property {string} [email_label="Email Address"]
+ * @property {string} [password_label="Password"]
+ * @property {string} [email_placeholder]
+ * @property {string} [password_placeholder]
+ * @property {string} [button_label_login="Log In"]
+ * @property {string} [button_label_signup="Sign Up"]
+ * @property {string} [button_label_forgot_password="Send Reset Password Link"]
+ * @property {string} [button_label_update_password="Update Password"]
+ * @property {string} [button_label_magic_link="Send Magic Link"]
+ * @property {string} [forgot_password_link="Forgot password?"]
+ * @property {string} [or_text="OR"]
+ * @property {string} [provider_label="Continue with"]
+ * @property {string} [email_provider_text="Email"]
+ * @property {string} [password_provider_text="Password"]
+ * @property {string} [footer_text_login="Already have an account?"]
+ * @property {string} [footer_text_signup="Need to create an account?"]
+ * @property {string} [footer_link_login="Log In"]
+ * @property {string} [footer_link_signup="Sign Up"]
+ * @property {string} [email_confirmation_text="Check your email for the confirmation link"]
+ * @property {string} [email_reset_password_text="Check your email for the password reset link]
+ * @property {string} [email_magic_link_text="Check your email for the magic link"]
+ * @property {string} [error_email_text="Enter a valid email"]
+ * @property {string} [error_password_text="Enter a valid password"]
+ */
+
+const defaultLocalization = {
+    header_text_login: "Log In",
+    header_text_signup: "Sign Up",
+    header_text_forgot_password: "Forgot Password",
+    header_text_update_password: "Update Password",
+    email_label: "Email Address",
+    password_label: "Password",
+    email_placeholder: "",
+    password_placeholder: "",
+    button_label_login: "Log In",
+    button_label_signup: "Sign Up",
+    button_label_forgot_password: "Send Reset Password Link",
+    button_label_update_password: "Update Password",
+    button_label_magic_link: "Send Magic Link",
+    forgot_password_link: "Forgot password?",
+    or_text: "OR",
+    provider_label: "Continue with",
+    email_provider_text: "Email",
+    password_provider_text: "Password",
+    footer_text_login: "Already have an account?",
+    footer_text_signup: "Need to create an account?",
+    footer_link_login: "Log In",
+    footer_link_signup: "Sign Up",
+    email_confirmation_text: "Check your email for the confirmation link",
+    email_reset_password_text: "Check your email for the password reset link",
+    email_magic_link_text: "Check your email for the magic link",
+    error_email_text: "Enter a valid email",
+    error_password_text: "Enter a valid password",
+}
 
 /**
  * Auth component
  * @param {Object} props
- * @param {SupabaseClient} props.supabase - Supabase client
- * @param {string} [props.defaultRedirect="/"] - Default redirect path
- * @param {string} [props.redirect] - Override Redirect path
+ * @param {SupabaseClient} props.supabaseClient - Supabase client
+ * @param {("horizontal" | "vertical")} [props.socialLayout="vertical"] - Social layout (horizontal or vertical)
+ * @param {string} [props.defaultRedirectTo="/"] - Default redirect path
+ * @param {string} [props.redirectTo] - Override Redirect path
  * @param {boolean} [props.magicLink=true] - Enable magic link
  * @param {boolean} [props.emailPassword=true] - Enable email and password
  * @param {boolean} [props.startWithMagicLink=false] - Start with magic link
  * @param {boolean} [props.nextRouter=true] - Enable Next.js router integration
  * @param {string} [props.initialView="login"] - Initial view to render
- * @param {string[]} [props.providers=[]] - Auth providers
+ * @param {("apple" | "facebook" | "github" | "google" | "twitter" | "email")[]} [props.providers=[]] - Auth providers
+ * @param {AuthLocalization} [props.localization={}] - Localization variables
  * @param {(label: string) => string} [props.formatLabel] - Format label
  * @returns {JSX.Element}
  */
 export function Auth({
-    supabase,
-    defaultRedirect = "/",
-    redirect = null,
+    supabaseClient,
+    socialLayout = "vertical",
+    defaultRedirectTo = "/",
+    redirectTo = null,
     magicLink = true,
     emailPassword = true,
     startWithMagicLink = false,
     nextRouter = true,
     initialView = "login",
     providers = [],
+    localization = {},
     formatLabel = (label) => label,
 }) {
+    localization = { ...defaultLocalization, ...localization }
+
     const router = useRouter()
     const [view, setView] = useState(nextRouter ? router.pathname.split("/")[1] : initialView)
     const [session, setSession] = useState(null)
-    const [currentRedirect, setCurrentRedirect] = useState(defaultRedirect)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
     const [successMessage, setSuccessMessage] = useState(null)
     const [isMagicLink, setIsMagicLink] = useState(startWithMagicLink || !emailPassword)
+    const emailInput = useRef(null)
+    const passwordInput = useRef(null)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [isVisible, setIsVisible] = React.useState(false)
     const [isEmailValid, setIsEmailValid] = useState(true)
     const [isPasswordValid, setIsPasswordValid] = useState(true)
     const isHydrated = useIsHydrated()
 
-    const viewTitles = {
-        login: formatLabel("Log In"),
-        signup: formatLabel("Sign Up"),
-        "forgot-password": formatLabel("Forgot Password"),
-    }
-
     const viewActions = {
-        login: isMagicLink ? formatLabel("Send Magic Link") : formatLabel("Log In"),
-        signup: formatLabel("Sign Up"),
-        "forgot-password": formatLabel("Reset Password")
+        login: isMagicLink ? localization.button_label_magic_link : localization.button_label_login,
+        signup: localization.button_label_signup,
+        "forgot-password": localization.button_label_forgot_password
     }
 
     // Get and watch changes to the session
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
             setSession(session)
         })
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabaseClient.auth.onAuthStateChange((_event, session) => {
             setSession(session)
         })
 
@@ -75,7 +139,7 @@ export function Auth({
 
     // Redirect the user when the session is active
     useEffect(() => {
-        if (session) router.replace(redirect || currentRedirect)
+        if (session) router.replace(redirectTo || router.query.redirect_to || defaultRedirectTo)
     }, [session])
 
     // Set the view based on the current router path
@@ -97,14 +161,13 @@ export function Auth({
 
         setError(null)
         setSuccessMessage(null)
-    }, [view])
+        setIsEmailValid(true)
+        setIsPasswordValid(true)
 
-    // Change the redirect based on the URL query
-    useEffect(() => {
-        if (router.query.redirect_to) {
-            setCurrentRedirect(router.query.redirect_to)
+        if (view == "signup") {
+            setIsVisible(false)
         }
-    }, [router.query])
+    }, [view])
 
     // Handle the form submission
     const handleSubmit = async (e) => {
@@ -113,42 +176,58 @@ export function Auth({
         setError(null)
         setSuccessMessage(null)
 
+        setIsEmailValid(true)
+        setIsPasswordValid(true)
+
+        if (!email || !email.includes("@")) {
+            setIsEmailValid(false)
+            emailInput.current.focus()
+            return
+        }
+
+        if (!password && ["login", "signup"].includes(view)) {
+            setIsPasswordValid(false)
+            passwordInput.current.focus()
+            return
+        }
+
         setIsLoading(true)
 
         switch (view) {
             case "login": {
                 if (isMagicLink) {
-                    const { error } = await supabase.auth.signInWithOtp({
+                    const { error } = await supabaseClient.auth.signInWithOtp({
                         email,
                         options: {
                             // set this to false if you do not want the user to be automatically signed up
-                            emailRedirectTo: redirect || currentRedirect
+                            emailRedirectTo: redirectTo || router.query.redirect_to || defaultRedirectTo,
                         }
                     })
                     setError(error)
-                    !error && setSuccessMessage("Check your email for the magic link")
-                    !error && e.target.reset()
+                    !error && setSuccessMessage(localization.email_magic_link_text)
+                    !error && setEmail("")
                 } else {
-                    const { error } = await supabase.auth.signInWithPassword({ email, password })
+                    console.log("um")
+                    const { error } = await supabaseClient.auth.signInWithPassword({ email, password })
                     setError(error)
                 }
 
                 break
             }
             case "signup": {
-                const { error } = await supabase.auth.signUp({ email, password })
+                const { error } = await supabaseClient.auth.signUp({ email, password })
                 setError(error)
                 break
             }
             case "forgot-password": {
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: `/update-password?redirect_to=${redirect || currentRedirect}`,
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: `/update-password?redirect_to=${redirectTo || router.query.redirect_to || defaultRedirectTo}`,
                 })
                 setError(error)
-                !error && setSuccessMessage("Check your email for the password reset link")
+                !error && setSuccessMessage(localization.email_reset_password_text)
+                !error && setEmail("")
                 break
             }
-
         }
 
         setIsLoading(false)
@@ -159,36 +238,76 @@ export function Auth({
             "flex flex-col w-full max-w-sm gap-4 transition-all"
         )}>
             <p className="text-xl font-medium ms-1">
-                {viewTitles[view]}
+                {localization[`header_text_${view.replaceAll("-", "_")}`]}
             </p>
 
             <form
                 className="relative flex flex-col gap-3"
+                noValidate={true}
                 onSubmit={handleSubmit}
             >
                 <Input
-                    label={formatLabel("Email Address")}
+                    ref={emailInput}
+                    errorMessage={!isEmailValid && localization.error_email_text}
+                    isInvalid={!isEmailValid}
+                    label={localization.email_label}
+                    placeholder={localization.email_placeholder}
                     name="email"
                     type="email"
                     value={email}
-                    onValueChange={setEmail}
+                    onValueChange={(value) => {
+                        setIsEmailValid(true)
+                        setEmail(value)
+                    }}
                     variant="bordered"
                 />
 
                 <Input
+                    ref={passwordInput}
+                    errorMessage={!isPasswordValid && localization.error_password_text}
+                    isInvalid={!isPasswordValid}
                     className={cn(
                         (emailPassword && !isMagicLink && ["login", "signup"].includes(view)) ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
                         "transition-all"
                     )}
-                    label={formatLabel("Password")}
+                    label={localization.password_label}
+                    placeholder={localization.password_placeholder}
                     name="password"
                     value={password}
                     onValueChange={setPassword}
-                    type="password"
+                    type={(isVisible && view == "signup") ? "text" : "password"}
                     variant="bordered"
+                    endContent={
+                        <Button
+                            isIconOnly
+                            type="button"
+                            onPress={() => setIsVisible(!isVisible)}
+                            size="sm"
+                            variant="light"
+                            radius="full"
+                            className={cn(
+                                view != "signup" && "opacity-0",
+                                "transition-all !bg-transparent"
+                            )}
+                            isDisabled={view != "signup"}
+                            disableRipple
+                        >
+                            {isVisible ? (
+                                <Icon
+                                    className="pointer-events-none text-2xl text-default-400"
+                                    icon="solar:eye-closed-linear"
+                                />
+                            ) : (
+                                <Icon
+                                    className="pointer-events-none text-2xl text-default-400"
+                                    icon="solar:eye-bold"
+                                />
+                            )}
+                        </Button>
+                    }
                 />
 
-                <Button color="primary" type="submit" isLoading={isLoading}>
+                <Button color="primary" type="submit" isLoading={isLoading} isDisabled={!!session}>
                     {viewActions[view]}
                 </Button>
             </form>
@@ -201,7 +320,7 @@ export function Auth({
                 size="sm"
                 onPress={() => setView("forgot-password")}
             >
-                {formatLabel("Forgot password?")}
+                {localization.forgot_password_link}
             </Link>
 
             <div className={cn(
@@ -221,7 +340,7 @@ export function Auth({
             )}>
                 <Card className="bg-success-50">
                     <CardBody className="text-small text-center !text-success-700 h-12">
-                        {successMessage && formatLabel(successMessage)}
+                        {successMessage}
                     </CardBody>
                 </Card>
             </div>
@@ -230,7 +349,7 @@ export function Auth({
                 <Divider className="flex-1" />
 
                 <p className="shrink-0 text-tiny text-default-500">
-                    {formatLabel("OR")}
+                    {localization.or_text}
                 </p>
 
                 <Divider className="flex-1" />
@@ -248,7 +367,11 @@ export function Auth({
                             setIsMagicLink(true)
                         }}
                     >
-                        {formatLabel("Continue with Email")}
+                        {localization.provider_label}
+
+                        &nbsp;
+
+                        {localization.email_provider_text}
                     </Button>
                 )}
 
@@ -263,11 +386,15 @@ export function Auth({
                             setIsMagicLink(false)
                         }}
                     >
-                        {formatLabel("Continue with Password")}
+                        {localization.provider_label}
+
+                        &nbsp;
+
+                        {localization.password_provider_text}
                     </Button>
                 )}
 
-                {providers?.length < 3 && (
+                {socialLayout == "vertical" && (
                     <div className="flex flex-col gap-2">
                         {providers?.map((provider) => (
                             <Button
@@ -275,7 +402,7 @@ export function Auth({
                                 startContent={authProviders[provider].icon}
                                 variant="flat"
                             >
-                                {formatLabel("Continue with")}
+                                {localization.provider_label}
 
                                 &nbsp;
 
@@ -286,7 +413,7 @@ export function Auth({
                 )}
 
 
-                {providers?.length > 2 && (
+                {socialLayout == "horizontal" && (
                     <div className="flex gap-2">
                         {providers?.map((provider) => (
                             <Button
@@ -307,7 +434,7 @@ export function Auth({
                     ["login"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
                     "text-center text-small transition-all"
                 )}>
-                    {formatLabel("Need to create an account?")}
+                    {localization.footer_text_signup}
 
                     &nbsp;
 
@@ -316,7 +443,7 @@ export function Auth({
                         onPress={() => setView("signup")}
                         className="cursor-pointer"
                     >
-                        {formatLabel("Sign Up")}
+                        {localization.footer_link_signup}
                     </Link>
                 </p>
 
@@ -324,7 +451,7 @@ export function Auth({
                     ["signup", "forgot-password"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
                     "text-center text-small transition-all"
                 )}>
-                    {formatLabel("Already have an account?")}
+                    {localization.footer_text_login}
 
                     &nbsp;
 
@@ -333,7 +460,7 @@ export function Auth({
                         onPress={() => setView("login")}
                         className="cursor-pointer"
                     >
-                        {formatLabel("Log In")}
+                        {localization.footer_link_login}
                     </Link>
                 </p>
             </div>
