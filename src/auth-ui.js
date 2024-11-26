@@ -81,7 +81,6 @@ const defaultLocalization = {
  * @param {string} [props.initialView="login"] - Initial view to render
  * @param {("apple" | "facebook" | "github" | "google" | "twitter" | "email")[]} [props.providers=[]] - Auth providers
  * @param {AuthLocalization} [props.localization={}] - Localization variables
- * @param {(label: string) => string} [props.formatLabel] - Format label
  * @returns {JSX.Element}
  */
 export function Auth({
@@ -96,7 +95,6 @@ export function Auth({
     initialView = "login",
     providers = [],
     localization = {},
-    formatLabel = (label) => label,
 }) {
     localization = { ...defaultLocalization, ...localization }
 
@@ -323,7 +321,7 @@ export function Auth({
             )}>
                 <Card className="bg-danger-50">
                     <CardBody className="text-small text-center !text-danger-700 min-h-12">
-                        {error && formatLabel(error?.message)}
+                        {error?.message}
                     </CardBody>
                 </Card>
             </div>
