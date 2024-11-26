@@ -151,9 +151,7 @@ export function Auth({
 
     // Push the router to the pathname for the current view
     useEffect(() => {
-        if (view != "login") {
-            setIsMagicLink(false)
-        }
+        if (view != "login") setIsMagicLink(false)
 
         if (nextRouter && view != router.pathname.split("/")[1]) {
             router.push(`/${view}`)
@@ -164,9 +162,7 @@ export function Auth({
         setIsEmailValid(true)
         setIsPasswordValid(true)
 
-        if (view == "signup") {
-            setIsVisible(false)
-        }
+        if (view == "signup") setIsVisible(false)
     }, [view])
 
     // Handle the form submission
@@ -185,7 +181,7 @@ export function Auth({
             return
         }
 
-        if (!password && ["login", "signup"].includes(view)) {
+        if (!password && ["login", "signup"].includes(view) && !isMagicLink) {
             setIsPasswordValid(false)
             passwordInput.current.focus()
             return
@@ -207,11 +203,9 @@ export function Auth({
                     !error && setSuccessMessage(localization.email_magic_link_text)
                     !error && setEmail("")
                 } else {
-                    console.log("um")
                     const { error } = await supabaseClient.auth.signInWithPassword({ email, password })
                     setError(error)
                 }
-
                 break
             }
             case "signup": {
@@ -286,7 +280,7 @@ export function Auth({
                             variant="light"
                             radius="full"
                             className={cn(
-                                view != "signup" && "opacity-0",
+                                view != "signup" && "opacity-0 !min-w-0 !max-w-0",
                                 "transition-all !bg-transparent"
                             )}
                             isDisabled={view != "signup"}
@@ -328,7 +322,7 @@ export function Auth({
                 "transition-all"
             )}>
                 <Card className="bg-danger-50">
-                    <CardBody className="text-small text-center !text-danger-700 h-12">
+                    <CardBody className="text-small text-center !text-danger-700 min-h-12">
                         {error && formatLabel(error?.message)}
                     </CardBody>
                 </Card>
@@ -339,7 +333,7 @@ export function Auth({
                 "transition-all"
             )}>
                 <Card className="bg-success-50">
-                    <CardBody className="text-small text-center !text-success-700 h-12">
+                    <CardBody className="text-small text-center !text-success-700 min-h-10">
                         {successMessage}
                     </CardBody>
                 </Card>
