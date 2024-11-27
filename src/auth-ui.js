@@ -37,7 +37,22 @@ import { Icon } from "@iconify/react"
  * @property {string} [error_password_text="Enter a valid password"]
  */
 
-const defaultLocalization = {
+/**
+ * @typedef {Object} AuthClassNames
+ * @property {string} [container]
+ * @property {string} [header]
+ * @property {string} [form]
+ * @property {string} [input]
+ * @property {string} [button]
+ * @property {string} [link]
+ * @property {string} [error]
+ * @property {string} [success]
+ * @property {string} [divider]
+ * @property {string} [provider]
+ * @property {string} [footer]
+ */
+
+export const defaultLocalization = {
     header_text_login: "Log In",
     header_text_signup: "Sign Up",
     header_text_forgot_password: "Forgot Password",
@@ -82,6 +97,9 @@ const defaultLocalization = {
  * @param {("apple" | "azure" | "bitbucket" | "discord" | "facebook" | "figma" | "github" | "gitlab" | "google" | "kakao" | "keycloak" | "linkedin" | "notion" | "twitch" | "twitter" | "slack" | "spotify" | "workos" | "zoom")[]} [props.providers=[]] - Auth providers
  * @param {AuthLocalization} [props.localization={}] - Localization variables
  * @param {string} [props.baseUrl=""] - Base URL for the app
+ * @param {string} [props.className] - Container class name
+ * @param {AuthClassNames} [props.classNames={}] - Class names for different elements
+ * @param {("primary" | "secondary" | "success" | "warning" | "error" | "default" | "info")} [props.color="primary"] - Button color
  * @returns {JSX.Element}
  */
 export function Auth({
@@ -96,7 +114,10 @@ export function Auth({
     initialView = "login",
     providers = [],
     localization = {},
-    baseUrl = ""
+    baseUrl = "",
+    className = null,
+    classNames = {},
+    color = "primary"
 }) {
     localization = { ...defaultLocalization, ...localization }
 
@@ -252,14 +273,16 @@ export function Auth({
 
     return (
         <div className={cn((!isHydrated) && "opacity-0",
-            "flex flex-col w-full max-w-sm gap-4 transition-all"
+            "flex flex-col w-full max-w-sm gap-4 transition-all",
+            className,
+            classNames?.container
         )}>
-            <p className="text-xl font-medium ms-1">
+            <p className={cn("text-xl font-medium ms-1", classNames?.header)}>
                 {localization[`header_text_${view.replaceAll("-", "_")}`]}
             </p>
 
             <form
-                className="relative flex flex-col gap-3"
+                className={cn("relative flex flex-col gap-3", classNames?.form)}
                 noValidate={true}
                 onSubmit={handleSubmit}
             >
@@ -279,7 +302,8 @@ export function Auth({
                     variant="bordered"
                     className={cn(
                         view != "update-password" ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
-                        "transition-all"
+                        "transition-all",
+                        classNames?.input
                     )}
                     isDisabled={view == "update-password"}
                 />
@@ -290,7 +314,8 @@ export function Auth({
                     isInvalid={!isPasswordValid}
                     className={cn(
                         (emailPassword && !isMagicLink && ["login", "signup", "update-password"].includes(view)) ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
-                        "transition-all"
+                        "transition-all",
+                        classNames?.input
                     )}
                     label={localization.password_label}
                     placeholder={localization.password_placeholder}
@@ -329,7 +354,13 @@ export function Auth({
                     }
                 />
 
-                <Button color="primary" type="submit" isLoading={isLoading} isDisabled={!!session && view != "update-password"}>
+                <Button
+                    color={color}
+                    type="submit"
+                    isLoading={isLoading}
+                    isDisabled={!!session && view != "update-password"}
+                    className={cn(classNames?.button)}
+                >
                     {viewActions[view]}
                 </Button>
             </form>
@@ -337,7 +368,9 @@ export function Auth({
             <Link
                 className={cn(
                     (view == "login" && !isMagicLink) ? "opacity-1" : "opacity-0 -mt-4 !h-0 overflow-hidden",
-                    "transition-all self-center cursor-pointer"
+                    "transition-all self-center cursor-pointer",
+                    `text-${color}`,
+                    classNames?.link
                 )}
                 size="sm"
                 onPress={() => setView("forgot-password")}
@@ -349,7 +382,7 @@ export function Auth({
                 error ? "opacity-1" : "opacity-0 -mt-4 !h-0 overflow-hidden",
                 "transition-all"
             )}>
-                <Card className="bg-danger-50">
+                <Card className={cn("bg-danger-50", classNames?.error)}>
                     <CardBody className="text-small text-center !text-danger-700 min-h-12">
                         {error?.message}
                     </CardBody>
@@ -360,7 +393,7 @@ export function Auth({
                 !successMessage && "opacity-0 -mt-4 !h-0 overflow-hidden",
                 "transition-all"
             )}>
-                <Card className="bg-success-50">
+                <Card className={cn("bg-success-50", classNames?.success)}>
                     <CardBody className="text-small text-center !text-success-700 min-h-10">
                         {successMessage}
                     </CardBody>
@@ -369,13 +402,13 @@ export function Auth({
 
             {view != "update-password" && (
                 <div className="flex items-center gap-4 py-2">
-                    <Divider className="flex-1" />
+                    <Divider className={cn("flex-1", classNames?.divider)} />
 
                     <p className="shrink-0 text-tiny text-default-500">
                         {localization.or_text}
                     </p>
 
-                    <Divider className="flex-1" />
+                    <Divider className={cn("flex-1", classNames?.divider)} />
                 </div>
             )}
 
@@ -392,7 +425,8 @@ export function Auth({
                         }}
                         className={cn(
                             (!magicLink || isMagicLink) && "opacity-0 translate-y-3 -mt-2 !h-0 overflow-hidden",
-                            "transition-all"
+                            "transition-all",
+                            classNames?.provider
                         )}
                     >
                         {localization.provider_label}
@@ -413,7 +447,8 @@ export function Auth({
                         }}
                         className={cn(
                             (!emailPassword || !isMagicLink) && "opacity-0 translate-y-3 -mt-2 !h-0 overflow-hidden",
-                            "transition-all"
+                            "transition-all",
+                            classNames?.provider
                         )}
                     >
                         {localization.provider_label}
@@ -431,6 +466,7 @@ export function Auth({
                                     startContent={authProviders[provider].icon}
                                     variant="flat"
                                     onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
+                                    className={classNames?.provider}
                                 >
                                     {localization.provider_label}
 
@@ -449,7 +485,7 @@ export function Auth({
                                 <Button
                                     key={provider}
                                     variant="flat"
-                                    className="min-w-0"
+                                    className={cn("min-w-0", classNames?.provider)}
                                     fullWidth
                                     onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
                                 >
@@ -462,7 +498,7 @@ export function Auth({
             )}
 
             {view != "update-password" && (
-                <div className="flex flex-col my-1">
+                <div className={cn("flex flex-col my-1", classNames?.footer)}>
                     <p className={cn(
                         ["login"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
                         "text-center text-small transition-all"
@@ -474,7 +510,7 @@ export function Auth({
                         <Link
                             size="sm"
                             onPress={() => setView("signup")}
-                            className="cursor-pointer"
+                            className={`cursor-pointer text-${color}`}
                         >
                             {localization.footer_link_signup}
                         </Link>
@@ -491,7 +527,7 @@ export function Auth({
                         <Link
                             size="sm"
                             onPress={() => setView("login")}
-                            className="cursor-pointer"
+                            className={`cursor-pointer text-${color}`}
                         >
                             {localization.footer_link_login}
                         </Link>
