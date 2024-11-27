@@ -8,7 +8,7 @@ export const authProviders = {
     },
     apple: {
         name: "Apple",
-        icon: <Icon className="text-default-500" icon="fa:apple" width={18} />,
+        icon: <Icon icon="fa:apple" width={18} />,
     },
     bitbucket: {
         name: "Bitbucket",
@@ -28,7 +28,7 @@ export const authProviders = {
     },
     github: {
         name: "GitHub",
-        icon: <Icon className="text-default-500" icon="fe:github" width={27} />,
+        icon: <Icon icon="fe:github" width={27} />,
     },
     gitlab: {
         name: "GitLab",
@@ -60,7 +60,7 @@ export const authProviders = {
     },
     twitter: {
         name: "Twitter",
-        icon: <Icon className="text-default-500" icon="logos:twitter" width={23} />,
+        icon: <Icon icon="logos:twitter" width={23} />,
     },
     slack: {
         name: "Slack",
