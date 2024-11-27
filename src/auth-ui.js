@@ -71,13 +71,13 @@ const defaultLocalization = {
  * Auth component
  * @param {Object} props
  * @param {SupabaseClient} props.supabaseClient - Supabase client
- * @param {("horizontal" | "vertical")} [props.socialLayout="vertical"] - Social layout (horizontal or vertical)
+ * @param {("horizontal" | "vertical")} [props.socialLayout="vertical"] - Social providers layout
  * @param {string} [props.defaultRedirectTo="/"] - Default redirect path
  * @param {string} [props.redirectTo] - Override Redirect path
  * @param {boolean} [props.magicLink=true] - Enable magic link
  * @param {boolean} [props.emailPassword=true] - Enable email and password
  * @param {boolean} [props.startWithMagicLink=false] - Start with magic link
- * @param {boolean} [props.nextRouter=true] - Enable Next.js router integration
+ * @param {boolean} [props.isRoutingEnabled=true] - Use pathnames for routing different views
  * @param {string} [props.initialView="login"] - Initial view to render
  * @param {("apple" | "facebook" | "github" | "google" | "twitter" | "email")[]} [props.providers=[]] - Auth providers
  * @param {AuthLocalization} [props.localization={}] - Localization variables
@@ -92,7 +92,7 @@ export function Auth({
     magicLink = true,
     emailPassword = true,
     startWithMagicLink = false,
-    nextRouter = true,
+    isRoutingEnabled = true,
     initialView = "login",
     providers = [],
     localization = {},
@@ -101,7 +101,7 @@ export function Auth({
     localization = { ...defaultLocalization, ...localization }
 
     const router = useRouter()
-    const [view, setView] = useState(nextRouter ? router.pathname.split("/")[1] : initialView)
+    const [view, setView] = useState(isRoutingEnabled ? router.pathname.split("/")[1] : initialView)
     const [session, setSession] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -151,7 +151,7 @@ export function Auth({
 
     // Set the view based on the current router path
     useEffect(() => {
-        if (nextRouter && view != router.pathname.split("/")[1]) {
+        if (isRoutingEnabled && view != router.pathname.split("/")[1]) {
             setView(router.pathname.split("/")[1])
         }
     }, [router.pathname])
@@ -160,7 +160,7 @@ export function Auth({
     useEffect(() => {
         if (view != "login") setIsMagicLink(false)
 
-        if (nextRouter && view != router.pathname.split("/")[1]) {
+        if (isRoutingEnabled && view != router.pathname.split("/")[1]) {
             router.push(`/${view}`)
         }
 
