@@ -119,12 +119,19 @@ export function Auth({
     const viewActions = {
         login: isMagicLink ? localization.button_label_magic_link : localization.button_label_login,
         signup: localization.button_label_signup,
-        "forgot-password": localization.button_label_forgot_password
+        "forgot-password": localization.button_label_forgot_password,
+        "update-password": localization.button_label_update_password,
     }
+
+    const currentRedirectTo = redirectTo || router.query.redirect_to || defaultRedirectTo
 
     // Get and watch changes to the session
     useEffect(() => {
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (view == "update-password" && !session) {
+                setView("login")
+            }
+
             setSession(session)
         })
 
@@ -139,7 +146,7 @@ export function Auth({
 
     // Redirect the user when the session is active
     useEffect(() => {
-        if (session) router.replace(redirectTo || router.query.redirect_to || defaultRedirectTo)
+        if (session && view != "update-password") router.replace(currentRedirectTo)
     }, [session])
 
     // Set the view based on the current router path
@@ -186,13 +193,13 @@ export function Auth({
         setIsEmailValid(true)
         setIsPasswordValid(true)
 
-        if (!email || !email.includes("@")) {
+        if ((!email || !email.includes("@")) && view != "update-password") {
             setIsEmailValid(false)
             emailInput.current.focus()
             return
         }
 
-        if (!password && ["login", "signup"].includes(view) && !isMagicLink) {
+        if (!password && ["login", "signup", "update-password"].includes(view) && !isMagicLink) {
             setIsPasswordValid(false)
             passwordInput.current.focus()
             return
@@ -206,8 +213,7 @@ export function Auth({
                     const { error } = await supabaseClient.auth.signInWithOtp({
                         email,
                         options: {
-                            // set this to false if you do not want the user to be automatically signed up
-                            emailRedirectTo: redirectTo || router.query.redirect_to || defaultRedirectTo,
+                            emailRedirectTo: `${baseUrl}/${currentRedirectTo}`,
                         }
                     })
                     setError(error)
@@ -226,11 +232,17 @@ export function Auth({
             }
             case "forgot-password": {
                 const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                    redirectTo: `${baseUrl}/update-password?redirect_to=${redirectTo || router.query.redirect_to || defaultRedirectTo}`,
+                    redirectTo: `${baseUrl}/update-password`,
                 })
                 setError(error)
                 !error && setSuccessMessage(localization.email_reset_password_text)
                 !error && setEmail("")
+                break
+            }
+            case "update-password": {
+                const { error } = await supabaseClient.auth.updateUser({ password })
+                setError(error)
+                !error && router.replace("/")
                 break
             }
         }
@@ -265,6 +277,11 @@ export function Auth({
                         setEmail(value)
                     }}
                     variant="bordered"
+                    className={cn(
+                        view != "update-password" ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
+                        "transition-all"
+                    )}
+                    isDisabled={view == "update-password"}
                 />
 
                 <Input
@@ -272,7 +289,7 @@ export function Auth({
                     errorMessage={!isPasswordValid && localization.error_password_text}
                     isInvalid={!isPasswordValid}
                     className={cn(
-                        (emailPassword && !isMagicLink && ["login", "signup"].includes(view)) ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
+                        (emailPassword && !isMagicLink && ["login", "signup", "update-password"].includes(view)) ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
                         "transition-all"
                     )}
                     label={localization.password_label}
@@ -291,10 +308,10 @@ export function Auth({
                             variant="light"
                             radius="full"
                             className={cn(
-                                view != "signup" && "opacity-0 !min-w-0 !max-w-0",
+                                !["signup", "update-password"].includes(view) && "opacity-0 !min-w-0 !max-w-0",
                                 "transition-all !bg-transparent"
                             )}
-                            isDisabled={view != "signup"}
+                            isDisabled={!["signup", "update-password"].includes(view)}
                             disableRipple
                         >
                             {isVisible ? (
@@ -312,7 +329,7 @@ export function Auth({
                     }
                 />
 
-                <Button color="primary" type="submit" isLoading={isLoading} isDisabled={!!session}>
+                <Button color="primary" type="submit" isLoading={isLoading} isDisabled={!!session && view != "update-password"}>
                     {viewActions[view]}
                 </Button>
             </form>
@@ -350,127 +367,133 @@ export function Auth({
                 </Card>
             </div>
 
-            <div className="flex items-center gap-4 py-2">
-                <Divider className="flex-1" />
+            {view != "update-password" && (
+                <div className="flex items-center gap-4 py-2">
+                    <Divider className="flex-1" />
 
-                <p className="shrink-0 text-tiny text-default-500">
-                    {localization.or_text}
-                </p>
+                    <p className="shrink-0 text-tiny text-default-500">
+                        {localization.or_text}
+                    </p>
 
-                <Divider className="flex-1" />
-            </div>
+                    <Divider className="flex-1" />
+                </div>
+            )}
 
-            <div className="flex flex-col gap-2">
-                {magicLink && !isMagicLink && (
-                    <Button
-                        startContent={
-                            authProviders.email.icon
-                        }
-                        variant="flat"
-                        onPress={() => {
-                            setView("login")
-                            setIsMagicLink(true)
-                        }}
-                    >
-                        {localization.provider_label}
+            {view != "update-password" && (
+                <div className="flex flex-col gap-2">
+                    {magicLink && !isMagicLink && (
+                        <Button
+                            startContent={
+                                authProviders.email.icon
+                            }
+                            variant="flat"
+                            onPress={() => {
+                                setView("login")
+                                setIsMagicLink(true)
+                            }}
+                        >
+                            {localization.provider_label}
+
+                            &nbsp;
+
+                            {localization.email_provider_text}
+                        </Button>
+                    )}
+
+                    {emailPassword && isMagicLink && (
+                        <Button
+                            startContent={
+                                authProviders.password.icon
+                            }
+                            variant="flat"
+                            onPress={() => {
+                                setView("login")
+                                setIsMagicLink(false)
+                            }}
+                        >
+                            {localization.provider_label}
+
+                            &nbsp;
+
+                            {localization.password_provider_text}
+                        </Button>
+                    )}
+
+                    {socialLayout == "vertical" && (
+                        <div className="flex flex-col gap-2">
+                            {providers?.map((provider) => (
+                                <Button
+                                    key={provider}
+                                    startContent={authProviders[provider].icon}
+                                    variant="flat"
+                                    onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
+                                >
+                                    {localization.provider_label}
+
+                                    &nbsp;
+
+                                    {authProviders[provider].name}
+                                </Button>
+                            ))}
+                        </div>
+                    )}
+
+
+                    {socialLayout == "horizontal" && (
+                        <div className="flex gap-2">
+                            {providers?.map((provider) => (
+                                <Button
+                                    key={provider}
+                                    variant="flat"
+                                    className="min-w-0"
+                                    fullWidth
+                                    onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
+                                >
+                                    {authProviders[provider].icon}
+                                </Button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {view != "update-password" && (
+                <div className="flex flex-col my-1">
+                    <p className={cn(
+                        ["login"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
+                        "text-center text-small transition-all"
+                    )}>
+                        {localization.footer_text_signup}
 
                         &nbsp;
 
-                        {localization.email_provider_text}
-                    </Button>
-                )}
+                        <Link
+                            size="sm"
+                            onPress={() => setView("signup")}
+                            className="cursor-pointer"
+                        >
+                            {localization.footer_link_signup}
+                        </Link>
+                    </p>
 
-                {emailPassword && isMagicLink && (
-                    <Button
-                        startContent={
-                            authProviders.password.icon
-                        }
-                        variant="flat"
-                        onPress={() => {
-                            setView("login")
-                            setIsMagicLink(false)
-                        }}
-                    >
-                        {localization.provider_label}
+                    <p className={cn(
+                        ["signup", "forgot-password"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
+                        "text-center text-small transition-all"
+                    )}>
+                        {localization.footer_text_login}
 
                         &nbsp;
 
-                        {localization.password_provider_text}
-                    </Button>
-                )}
-
-                {socialLayout == "vertical" && (
-                    <div className="flex flex-col gap-2">
-                        {providers?.map((provider) => (
-                            <Button
-                                key={provider}
-                                startContent={authProviders[provider].icon}
-                                variant="flat"
-                                onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
-                            >
-                                {localization.provider_label}
-
-                                &nbsp;
-
-                                {authProviders[provider].name}
-                            </Button>
-                        ))}
-                    </div>
-                )}
-
-
-                {socialLayout == "horizontal" && (
-                    <div className="flex gap-2">
-                        {providers?.map((provider) => (
-                            <Button
-                                key={provider}
-                                variant="flat"
-                                className="min-w-0"
-                                fullWidth
-                                onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
-                            >
-                                {authProviders[provider].icon}
-                            </Button>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="flex flex-col my-1">
-                <p className={cn(
-                    ["login"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
-                    "text-center text-small transition-all"
-                )}>
-                    {localization.footer_text_signup}
-
-                    &nbsp;
-
-                    <Link
-                        size="sm"
-                        onPress={() => setView("signup")}
-                        className="cursor-pointer"
-                    >
-                        {localization.footer_link_signup}
-                    </Link>
-                </p>
-
-                <p className={cn(
-                    ["signup", "forgot-password"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
-                    "text-center text-small transition-all"
-                )}>
-                    {localization.footer_text_login}
-
-                    &nbsp;
-
-                    <Link
-                        size="sm"
-                        onPress={() => setView("login")}
-                        className="cursor-pointer"
-                    >
-                        {localization.footer_link_login}
-                    </Link>
-                </p>
-            </div>
+                        <Link
+                            size="sm"
+                            onPress={() => setView("login")}
+                            className="cursor-pointer"
+                        >
+                            {localization.footer_link_login}
+                        </Link>
+                    </p>
+                </div>
+            )}
         </div>
     )
 }
