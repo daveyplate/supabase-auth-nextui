@@ -357,7 +357,7 @@ export function Auth({
             </div>
 
             <div className={cn(
-                successMessage ? "opacity-1" : "opacity-0 -mt-4 !h-0 overflow-hidden",
+                !successMessage && "opacity-0 -mt-4 !h-0 overflow-hidden",
                 "transition-all"
             )}>
                 <Card className="bg-success-50">
@@ -381,43 +381,47 @@ export function Auth({
 
             {view != "update-password" && (
                 <div className="flex flex-col gap-2">
-                    {magicLink && !isMagicLink && (
-                        <Button
-                            startContent={
-                                authProviders.email.icon
-                            }
-                            variant="flat"
-                            onPress={() => {
-                                setView("login")
-                                setIsMagicLink(true)
-                            }}
-                        >
-                            {localization.provider_label}
+                    <Button
+                        startContent={
+                            authProviders.email.icon
+                        }
+                        variant="flat"
+                        onPress={() => {
+                            setView("login")
+                            setIsMagicLink(true)
+                        }}
+                        className={cn(
+                            (!magicLink || isMagicLink) && "opacity-0 translate-y-3 -mt-2 !h-0 overflow-hidden",
+                            "transition-all"
+                        )}
+                    >
+                        {localization.provider_label}
 
-                            &nbsp;
+                        &nbsp;
 
-                            {localization.email_provider_text}
-                        </Button>
-                    )}
+                        {localization.email_provider_text}
+                    </Button>
 
-                    {emailPassword && isMagicLink && (
-                        <Button
-                            startContent={
-                                authProviders.password.icon
-                            }
-                            variant="flat"
-                            onPress={() => {
-                                setView("login")
-                                setIsMagicLink(false)
-                            }}
-                        >
-                            {localization.provider_label}
+                    <Button
+                        startContent={
+                            authProviders.password.icon
+                        }
+                        variant="flat"
+                        onPress={() => {
+                            setView("login")
+                            setIsMagicLink(false)
+                        }}
+                        className={cn(
+                            (!emailPassword || !isMagicLink) && "opacity-0 translate-y-3 -mt-2 !h-0 overflow-hidden",
+                            "transition-all"
+                        )}
+                    >
+                        {localization.provider_label}
 
-                            &nbsp;
+                        &nbsp;
 
-                            {localization.password_provider_text}
-                        </Button>
-                    )}
+                        {localization.password_provider_text}
+                    </Button>
 
                     {socialLayout == "vertical" && (
                         <div className="flex flex-col gap-2">
