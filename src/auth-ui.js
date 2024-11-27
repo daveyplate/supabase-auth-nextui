@@ -81,6 +81,7 @@ const defaultLocalization = {
  * @param {string} [props.initialView="login"] - Initial view to render
  * @param {("apple" | "facebook" | "github" | "google" | "twitter" | "email")[]} [props.providers=[]] - Auth providers
  * @param {AuthLocalization} [props.localization={}] - Localization variables
+ * @param {string} [props.baseUrl=""] - Base URL for the app
  * @returns {JSX.Element}
  */
 export function Auth({
@@ -95,6 +96,7 @@ export function Auth({
     initialView = "login",
     providers = [],
     localization = {},
+    baseUrl = ""
 }) {
     localization = { ...defaultLocalization, ...localization }
 
@@ -163,6 +165,17 @@ export function Auth({
         if (view == "signup") setIsVisible(false)
     }, [view])
 
+    useEffect(() => {
+        if (startWithMagicLink || !emailPassword) {
+            setIsMagicLink(true)
+        }
+
+        if (!magicLink) {
+            setIsMagicLink(false)
+        }
+
+    }, [magicLink, startWithMagicLink, emailPassword])
+
     // Handle the form submission
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -213,7 +226,7 @@ export function Auth({
             }
             case "forgot-password": {
                 const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                    redirectTo: `/update-password?redirect_to=${redirectTo || router.query.redirect_to || defaultRedirectTo}`,
+                    redirectTo: `${baseUrl}/update-password?redirect_to=${redirectTo || router.query.redirect_to || defaultRedirectTo}`,
                 })
                 setError(error)
                 !error && setSuccessMessage(localization.email_reset_password_text)
