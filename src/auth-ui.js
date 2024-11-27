@@ -406,6 +406,7 @@ export function Auth({
                                 key={provider}
                                 startContent={authProviders[provider].icon}
                                 variant="flat"
+                                onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
                             >
                                 {localization.provider_label}
 
@@ -426,6 +427,7 @@ export function Auth({
                                 variant="flat"
                                 className="min-w-0"
                                 fullWidth
+                                onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
                             >
                                 {authProviders[provider].icon}
                             </Button>
