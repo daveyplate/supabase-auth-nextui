@@ -79,7 +79,7 @@ const defaultLocalization = {
  * @param {boolean} [props.startWithMagicLink=false] - Start with magic link
  * @param {boolean} [props.isRoutingEnabled=true] - Use pathnames for routing different views
  * @param {string} [props.initialView="login"] - Initial view to render
- * @param {("apple" | "facebook" | "github" | "google" | "twitter" | "email")[]} [props.providers=[]] - Auth providers
+ * @param {("apple" | "azure" | "bitbucket" | "discord" | "facebook" | "figma" | "github" | "gitlab" | "google" | "kakao" | "keycloak" | "linkedin" | "notion" | "twitch" | "twitter" | "slack" | "spotify" | "workos" | "zoom")[]} [props.providers=[]] - Auth providers
  * @param {AuthLocalization} [props.localization={}] - Localization variables
  * @param {string} [props.baseUrl=""] - Base URL for the app
  * @returns {JSX.Element}
