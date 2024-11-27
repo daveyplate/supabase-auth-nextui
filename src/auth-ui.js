@@ -215,6 +215,14 @@ export function Auth({
     }, [view])
 
     useEffect(() => {
+        setPassword("")
+        setError(null)
+        setSuccessMessage(null)
+        setIsEmailValid(true)
+        setIsPasswordValid(true)
+    }, [isMagicLink])
+
+    useEffect(() => {
         if (startWithMagicLink || !emailPassword) {
             setIsMagicLink(true)
         }
@@ -298,28 +306,47 @@ export function Auth({
             className,
             classNames?.container
         )} style={{ ...style, ...styles?.container }}>
+            <style global jsx>{`
+                input:-webkit-autofill-and-obscured,
+                input:-webkit-autofill-strong-password,
+                input:-webkit-autofill-strong-password-viewable,
+                input:-webkit-autofill {
+                    -webkit-text-fill-color: #71717a;
+                }
+            `}</style>
+
             <p className={cn("text-xl font-medium ms-1", classNames?.header)} style={styles?.header}>
                 {localization[`header_text_${view.replaceAll("-", "_")}`]}
             </p>
 
             <form
+                key={isMagicLink ? "magic-link" : view}
                 className={cn("relative flex flex-col gap-3", classNames?.form)}
                 style={styles?.form}
                 noValidate={true}
                 onSubmit={handleSubmit}
+                action={`/${view}`}
             >
                 <Input
                     ref={emailInput}
+                    enterKeyHint={isMagicLink ? "send" : "next"}
                     errorMessage={!isEmailValid && localization.error_email_text}
                     isInvalid={!isEmailValid}
                     label={localization.email_label}
                     placeholder={localization.email_placeholder}
                     name="email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onValueChange={(value) => {
                         setIsEmailValid(true)
                         setEmail(value)
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key == "Enter" && !isMagicLink) {
+                            e.preventDefault()
+                            passwordInput.current.focus()
+                        }
                     }}
                     variant="bordered"
                     className={cn(
@@ -333,8 +360,10 @@ export function Auth({
 
                 <Input
                     ref={passwordInput}
+                    enterKeyHint={view == "update-password" ? "send" : "go"}
                     errorMessage={!isPasswordValid && localization.error_password_text}
                     isInvalid={!isPasswordValid}
+                    isDisabled={!emailPassword || isMagicLink || view == "update-password"}
                     className={cn(
                         (emailPassword && !isMagicLink && ["login", "signup", "update-password"].includes(view)) ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
                         "transition-all",
@@ -343,16 +372,17 @@ export function Auth({
                     style={styles?.input}
                     label={localization.password_label}
                     placeholder={localization.password_placeholder}
-                    name="password"
-                    value={password}
+                    autoComplete={isMagicLink ? "off" : ["signup", "update-password"].includes(view) ? "new-password" : "new-password"}
+                    name={isMagicLink ? null : "password"}
+                    value={isMagicLink ? "" : password}
                     onValueChange={setPassword}
-                    type={(isVisible && view == "signup") ? "text" : "password"}
+                    type={(isMagicLink || (isVisible && view == "signup")) ? "text" : "password"}
                     variant="bordered"
                     endContent={
                         <Button
                             isIconOnly
                             type="button"
-                            onPress={() => setIsVisible(!isVisible)}
+                            onPressStart={() => setIsVisible(!isVisible)}
                             size="sm"
                             variant="light"
                             radius="full"
@@ -385,6 +415,7 @@ export function Auth({
                     isDisabled={!!session && view != "update-password"}
                     className={cn(classNames?.button)}
                     style={styles?.button}
+                    onPressStart={(e) => e.target.click()}
                 >
                     {viewActions[view]}
                 </Button>
@@ -399,7 +430,7 @@ export function Auth({
                 )}
                 style={styles?.link}
                 size="sm"
-                onPress={() => setView("forgot-password")}
+                onPressStart={() => setView("forgot-password")}
             >
                 {localization.forgot_password_link}
             </Link>
