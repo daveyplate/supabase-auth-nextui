@@ -2,7 +2,7 @@
   "name": "@daveyplate/supabase-auth-nextui",
   "homepage": "https://github.com/daveyplate/supabase-auth-nextui",
   "version": "1.0.0",
-  "description": "",
+  "description": "Pre-built NextUI authentication components for Supabase",
   "module": "dist/index",
   "types": "dist/index",
   "files": [
@@ -14,7 +14,15 @@
     "dev": "nodemon --watch src --exec 'npm run build'",
     "prepublishOnly": "npm run build"
   },
-  "keywords": [],
+  "keywords": [
+    "supabase",
+    "auth",
+    "nextui",
+    "react",
+    "nextjs",
+    "login",
+    "signup"
+  ],
   "author": "daveycodez",
   "license": "ISC",
   "devDependencies": {
