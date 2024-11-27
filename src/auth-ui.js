@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react"
-import { Button, Input, Link, Divider, Card, CardBody, cn, CardHeader, CardFooter } from "@nextui-org/react"
 import { useRouter } from "next/router"
 import { SupabaseClient } from "@supabase/supabase-js"
+
+import { Button, Input, Link, Divider, Card, CardBody, cn } from "@nextui-org/react"
+import { Icon } from "@iconify/react"
+
 import { authProviders } from "./auth-providers"
 import { useIsHydrated } from "./use-is-hydrated"
-import { Icon } from "@iconify/react"
 
 /**
  * @typedef {Object} AuthLocalization
