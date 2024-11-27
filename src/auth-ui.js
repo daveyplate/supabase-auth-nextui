@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, CSSProperties } from "react"
 import { useRouter } from "next/router"
 import { SupabaseClient } from "@supabase/supabase-js"
 
@@ -54,6 +54,21 @@ import { useIsHydrated } from "./use-is-hydrated"
  * @property {string} [footer]
  */
 
+/**
+ * @typedef {Object} AuthStyles
+ * @property {CSSProperties} [container]
+ * @property {CSSProperties} [header]
+ * @property {CSSProperties} [form]
+ * @property {CSSProperties} [input]
+ * @property {CSSProperties} [button]
+ * @property {CSSProperties} [link]
+ * @property {CSSProperties} [error]
+ * @property {CSSProperties} [success]
+ * @property {CSSProperties} [divider]
+ * @property {CSSProperties} [provider]
+ * @property {CSSProperties} [footer]
+ */
+
 export const defaultLocalization = {
     header_text_login: "Log In",
     header_text_signup: "Sign Up",
@@ -100,7 +115,9 @@ export const defaultLocalization = {
  * @param {AuthLocalization} [props.localization={}] - Localization variables
  * @param {string} [props.baseUrl=""] - Base URL for the app
  * @param {string} [props.className] - Container class name
+ * @param {CSSProperties} [props.style] - Container style
  * @param {AuthClassNames} [props.classNames={}] - Class names for different elements
+ * @param {AuthStyles} [props.styles={}] - Styles for different elements
  * @param {("primary" | "secondary" | "success" | "warning" | "error" | "default" | "info")} [props.color="primary"] - Button color
  * @returns {JSX.Element}
  */
@@ -118,7 +135,9 @@ export function Auth({
     localization = {},
     baseUrl = "",
     className = null,
+    style = null,
     classNames = {},
+    styles = {},
     color = "primary"
 }) {
     localization = { ...defaultLocalization, ...localization }
@@ -278,13 +297,14 @@ export function Auth({
             "flex flex-col w-full max-w-sm gap-4 transition-all",
             className,
             classNames?.container
-        )}>
-            <p className={cn("text-xl font-medium ms-1", classNames?.header)}>
+        )} style={{ ...style, ...styles?.container }}>
+            <p className={cn("text-xl font-medium ms-1", classNames?.header)} style={styles?.header}>
                 {localization[`header_text_${view.replaceAll("-", "_")}`]}
             </p>
 
             <form
                 className={cn("relative flex flex-col gap-3", classNames?.form)}
+                style={styles?.form}
                 noValidate={true}
                 onSubmit={handleSubmit}
             >
@@ -307,6 +327,7 @@ export function Auth({
                         "transition-all",
                         classNames?.input
                     )}
+                    style={styles?.input}
                     isDisabled={view == "update-password"}
                 />
 
@@ -319,6 +340,7 @@ export function Auth({
                         "transition-all",
                         classNames?.input
                     )}
+                    style={styles?.input}
                     label={localization.password_label}
                     placeholder={localization.password_placeholder}
                     name="password"
@@ -362,6 +384,7 @@ export function Auth({
                     isLoading={isLoading}
                     isDisabled={!!session && view != "update-password"}
                     className={cn(classNames?.button)}
+                    style={styles?.button}
                 >
                     {viewActions[view]}
                 </Button>
@@ -374,6 +397,7 @@ export function Auth({
                     `text-${color}`,
                     classNames?.link
                 )}
+                style={styles?.link}
                 size="sm"
                 onPress={() => setView("forgot-password")}
             >
@@ -384,7 +408,7 @@ export function Auth({
                 error ? "opacity-1" : "opacity-0 -mt-4 !h-0 overflow-hidden",
                 "transition-all"
             )}>
-                <Card className={cn("bg-danger-50", classNames?.error)}>
+                <Card className={cn("bg-danger-50", classNames?.error)} style={styles?.error}>
                     <CardBody className="text-small text-center !text-danger-700 min-h-12">
                         {error?.message}
                     </CardBody>
@@ -395,7 +419,7 @@ export function Auth({
                 !successMessage && "opacity-0 -mt-4 !h-0 overflow-hidden",
                 "transition-all"
             )}>
-                <Card className={cn("bg-success-50", classNames?.success)}>
+                <Card className={cn("bg-success-50", classNames?.success)} style={styles?.success}>
                     <CardBody className="text-small text-center !text-success-700 min-h-10">
                         {successMessage}
                     </CardBody>
@@ -404,13 +428,13 @@ export function Auth({
 
             {view != "update-password" && (
                 <div className="flex items-center gap-4 py-2">
-                    <Divider className={cn("flex-1", classNames?.divider)} />
+                    <Divider className={cn("flex-1", classNames?.divider)} style={styles?.divider} />
 
                     <p className="shrink-0 text-tiny text-default-500">
                         {localization.or_text}
                     </p>
 
-                    <Divider className={cn("flex-1", classNames?.divider)} />
+                    <Divider className={cn("flex-1", classNames?.divider)} style={styles?.divider} />
                 </div>
             )}
 
@@ -430,6 +454,7 @@ export function Auth({
                             "transition-all",
                             classNames?.provider
                         )}
+                        style={styles?.provider}
                     >
                         {localization.provider_label}
 
@@ -452,6 +477,7 @@ export function Auth({
                             "transition-all",
                             classNames?.provider
                         )}
+                        style={styles?.provider}
                     >
                         {localization.provider_label}
 
@@ -469,6 +495,7 @@ export function Auth({
                                     variant="flat"
                                     onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
                                     className={classNames?.provider}
+                                    style={styles?.provider}
                                 >
                                     {localization.provider_label}
 
@@ -488,6 +515,7 @@ export function Auth({
                                     key={provider}
                                     variant="flat"
                                     className={cn("min-w-0", classNames?.provider)}
+                                    style={styles?.provider}
                                     fullWidth
                                     onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
                                 >
@@ -500,7 +528,7 @@ export function Auth({
             )}
 
             {view != "update-password" && (
-                <div className={cn("flex flex-col my-1", classNames?.footer)}>
+                <div className={cn("flex flex-col my-1", classNames?.footer)} style={styles?.footer}>
                     <p className={cn(
                         ["login"].includes(view) ? "opacity-1" : "opacity-0 translate-y-3 h-0 overflow-hidden",
                         "text-center text-small transition-all"
@@ -513,6 +541,7 @@ export function Auth({
                             size="sm"
                             onPress={() => setView("signup")}
                             className={`cursor-pointer text-${color}`}
+                            style={styles?.link}
                         >
                             {localization.footer_link_signup}
                         </Link>
@@ -530,6 +559,7 @@ export function Auth({
                             size="sm"
                             onPress={() => setView("login")}
                             className={`cursor-pointer text-${color}`}
+                            style={styles?.link}
                         >
                             {localization.footer_link_login}
                         </Link>
