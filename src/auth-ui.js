@@ -302,7 +302,7 @@ export function Auth({
 
     return (
         <div className={cn((!isHydrated) && "opacity-0",
-            "flex flex-col w-full max-w-sm gap-4 transition-all",
+            "flex flex-col w-full gap-4 transition-all",
             className,
             classNames?.container
         )} style={{ ...style, ...styles?.container }}>
