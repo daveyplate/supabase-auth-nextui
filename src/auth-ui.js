@@ -104,6 +104,7 @@ export const defaultLocalization = {
  * @param {Object} props
  * @param {SupabaseClient} props.supabaseClient - Supabase client
  * @param {("horizontal" | "vertical")} [props.socialLayout="vertical"] - Social providers layout
+ * @param {boolean} [props.asCard=true] - Render as Card
  * @param {string} [props.defaultRedirectTo="/"] - Default redirect path
  * @param {string} [props.redirectTo] - Override Redirect path
  * @param {boolean} [props.magicLink=true] - Enable magic link
@@ -124,6 +125,7 @@ export const defaultLocalization = {
 export function Auth({
     supabaseClient,
     socialLayout = "vertical",
+    asCard = true,
     defaultRedirectTo = "/",
     redirectTo = null,
     magicLink = true,
@@ -302,7 +304,8 @@ export function Auth({
 
     return (
         <div className={cn((!isHydrated) && "opacity-0",
-            "flex flex-col w-full gap-4 transition-all",
+            "flex w-full max-w-sm flex-col gap-4 px-8 pb-10 pt-6",
+            asCard && "rounded-large bg-content1 shadow-small",
             className,
             classNames?.container
         )} style={{ ...style, ...styles?.container }}>
@@ -315,13 +318,13 @@ export function Auth({
                 }
             `}</style>
 
-            <p className={cn("text-xl font-medium ms-1", classNames?.header)} style={styles?.header}>
+            <p className={cn("pb-2 text-xl font-medium", classNames?.header)} style={styles?.header}>
                 {localization[`header_text_${view.replaceAll("-", "_")}`]}
             </p>
 
             <form
                 key={isMagicLink ? "magic-link" : view}
-                className={cn("relative flex flex-col gap-3", classNames?.form)}
+                className={cn("flex flex-col gap-3", classNames?.form)}
                 style={styles?.form}
                 noValidate={true}
                 onSubmit={handleSubmit}
