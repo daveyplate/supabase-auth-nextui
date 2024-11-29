@@ -1,7 +1,7 @@
 {
   "name": "@daveyplate/supabase-auth-nextui",
   "homepage": "https://github.com/daveyplate/supabase-auth-nextui",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Pre-built NextUI authentication components for Supabase",
   "module": "dist/index",
   "types": "dist/index",
