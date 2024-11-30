@@ -304,12 +304,12 @@ export function Auth({
 
     return (
         <div className={cn((!isHydrated) && "opacity-0",
-            "flex w-full max-w-sm flex-col gap-4 px-8 pb-10 pt-6",
+            "flex w-full max-w-sm flex-col gap-4 p-5",
             asCard && "rounded-large bg-content1 shadow-small",
             className,
             classNames?.container
         )} style={{ ...style, ...styles?.container }}>
-            <style global jsx>{`
+            <style global="true" jsx="true">{`
                 input:-webkit-autofill-and-obscured,
                 input:-webkit-autofill-strong-password,
                 input:-webkit-autofill-strong-password-viewable,
@@ -318,7 +318,7 @@ export function Auth({
                 }
             `}</style>
 
-            <p className={cn("pb-2 text-xl font-medium", classNames?.header)} style={styles?.header}>
+            <p className={cn("text-xl font-medium ms-1", classNames?.header)} style={styles?.header}>
                 {localization[`header_text_${view.replaceAll("-", "_")}`]}
             </p>
 
