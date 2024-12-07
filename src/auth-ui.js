@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState, CSSProperties } from "react"
-import { useRouter } from "next/router"
 import { SupabaseClient } from "@supabase/supabase-js"
+import { useRouter } from "next/router"
+import React, { CSSProperties, useEffect, useRef, useState } from "react"
 
-import { Button, Input, Link, Divider, Card, CardBody, cn } from "@nextui-org/react"
 import { Icon } from "@iconify/react"
+import { Alert, Button, cn, Divider, Form, Input, Link } from "@nextui-org/react"
 
 import { authProviders } from "./auth-providers"
 import { useIsHydrated } from "./use-is-hydrated"
@@ -45,12 +45,12 @@ import { useIsHydrated } from "./use-is-hydrated"
  * @property {string} [header]
  * @property {string} [form]
  * @property {string} [input]
- * @property {string} [button]
+ * @property {string} [button_submit]
  * @property {string} [link]
- * @property {string} [error]
- * @property {string} [success]
+ * @property {string} [alert_error]
+ * @property {string} [alert_success]
  * @property {string} [divider]
- * @property {string} [provider]
+ * @property {string} [button_provider]
  * @property {string} [footer]
  */
 
@@ -60,12 +60,12 @@ import { useIsHydrated } from "./use-is-hydrated"
  * @property {CSSProperties} [header]
  * @property {CSSProperties} [form]
  * @property {CSSProperties} [input]
- * @property {CSSProperties} [button]
+ * @property {CSSProperties} [button_submit]
  * @property {CSSProperties} [link]
- * @property {CSSProperties} [error]
- * @property {CSSProperties} [success]
+ * @property {CSSProperties} [alert_error]
+ * @property {CSSProperties} [alert_success]
  * @property {CSSProperties} [divider]
- * @property {CSSProperties} [provider]
+ * @property {CSSProperties} [button_provider]
  * @property {CSSProperties} [footer]
  */
 
@@ -156,8 +156,6 @@ export function Auth({
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [isVisible, setIsVisible] = React.useState(false)
-    const [isEmailValid, setIsEmailValid] = useState(true)
-    const [isPasswordValid, setIsPasswordValid] = useState(true)
     const isHydrated = useIsHydrated()
 
     const viewActions = {
@@ -210,8 +208,6 @@ export function Auth({
 
         setError(null)
         setSuccessMessage(null)
-        setIsEmailValid(true)
-        setIsPasswordValid(true)
 
         if (view == "signup") setIsVisible(false)
     }, [view])
@@ -220,8 +216,6 @@ export function Auth({
         setPassword("")
         setError(null)
         setSuccessMessage(null)
-        setIsEmailValid(true)
-        setIsPasswordValid(true)
     }, [isMagicLink])
 
     useEffect(() => {
@@ -241,22 +235,6 @@ export function Auth({
 
         setError(null)
         setSuccessMessage(null)
-
-        setIsEmailValid(true)
-        setIsPasswordValid(true)
-
-        if ((!email || !email.includes("@")) && view != "update-password") {
-            setIsEmailValid(false)
-            emailInput.current.focus()
-            return
-        }
-
-        if (!password && ["login", "signup", "update-password"].includes(view) && !isMagicLink) {
-            setIsPasswordValid(false)
-            passwordInput.current.focus()
-            return
-        }
-
         setIsLoading(true)
 
         switch (view) {
@@ -322,19 +300,18 @@ export function Auth({
                 {localization[`header_text_${view.replaceAll("-", "_")}`]}
             </p>
 
-            <form
+            <Form
                 key={isMagicLink ? "magic-link" : view}
                 className={cn("flex flex-col gap-3", classNames?.form)}
+                validationBehavior="native"
                 style={styles?.form}
-                noValidate={true}
                 onSubmit={handleSubmit}
                 action={`/${view}`}
             >
                 <Input
                     ref={emailInput}
                     enterKeyHint={isMagicLink ? "send" : "next"}
-                    errorMessage={!isEmailValid && localization.error_email_text}
-                    isInvalid={!isEmailValid}
+                    errorMessage={localization.error_email_text}
                     label={localization.email_label}
                     placeholder={localization.email_placeholder}
                     name="email"
@@ -342,7 +319,6 @@ export function Auth({
                     autoComplete="email"
                     value={email}
                     onValueChange={(value) => {
-                        setIsEmailValid(true)
                         setEmail(value)
                     }}
                     onKeyDown={(e) => {
@@ -357,6 +333,9 @@ export function Auth({
                         "transition-all",
                         classNames?.input
                     )}
+                    validate={(value) =>
+                        value?.includes("@") ? true : localization.error_email_text
+                    }
                     style={styles?.input}
                     isDisabled={view == "update-password"}
                 />
@@ -364,8 +343,10 @@ export function Auth({
                 <Input
                     ref={passwordInput}
                     enterKeyHint={view == "update-password" ? "send" : "go"}
-                    errorMessage={!isPasswordValid && localization.error_password_text}
-                    isInvalid={!isPasswordValid}
+                    errorMessage={localization.error_password_text}
+                    validate={(value) =>
+                        !value?.length && localization.error_password_text
+                    }
                     isDisabled={!emailPassword || isMagicLink || view == "update-password"}
                     className={cn(
                         (emailPassword && !isMagicLink && ["login", "signup", "update-password"].includes(view)) ? "opacity-1" : "opacity-0 -mt-3 !h-0 overflow-hidden",
@@ -412,17 +393,18 @@ export function Auth({
                 />
 
                 <Button
+                    fullWidth
                     color={color}
                     type="submit"
                     isLoading={isLoading}
                     isDisabled={!!session && view != "update-password"}
-                    className={cn(classNames?.button)}
-                    style={styles?.button}
+                    className={cn(classNames?.button_submit)}
+                    style={styles?.button_submit}
                     onPressStart={(e) => e.target.click()}
                 >
                     {viewActions[view]}
                 </Button>
-            </form>
+            </Form>
 
             <Link
                 className={cn(
@@ -440,24 +422,20 @@ export function Auth({
 
             <div className={cn(
                 error ? "opacity-1" : "opacity-0 -mt-4 !h-0 overflow-hidden",
-                "transition-all"
+                "transition-all text-small"
             )}>
-                <Card className={cn("bg-danger-50", classNames?.error)} style={styles?.error}>
-                    <CardBody className="text-small text-center !text-danger-700 min-h-12">
-                        {error?.message}
-                    </CardBody>
-                </Card>
+                <Alert color="danger" variant="faded" classNames={{ base: cn(classNames?.alert_error) }} style={styles?.alert_error}>
+                    {error?.message}
+                </Alert>
             </div>
 
             <div className={cn(
                 !successMessage && "opacity-0 -mt-4 !h-0 overflow-hidden",
-                "transition-all"
+                "transition-all text-small"
             )}>
-                <Card className={cn("bg-success-50", classNames?.success)} style={styles?.success}>
-                    <CardBody className="text-small text-center !text-success-700 min-h-10">
-                        {successMessage}
-                    </CardBody>
-                </Card>
+                <Alert color="success" variant="faded" classNames={{ base: cn(classNames?.alert_success) }} style={styles?.alert_success}>
+                    {successMessage}
+                </Alert>
             </div>
 
             {view != "update-password" && (
@@ -486,9 +464,9 @@ export function Auth({
                         className={cn(
                             (!magicLink || isMagicLink) && "opacity-0 translate-y-3 -mt-2 !h-0 overflow-hidden",
                             "transition-all",
-                            classNames?.provider
+                            classNames?.button_provider
                         )}
-                        style={styles?.provider}
+                        style={styles?.button_provider}
                     >
                         {localization.provider_label}
 
