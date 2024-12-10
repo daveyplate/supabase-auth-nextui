@@ -1,4 +1,4 @@
-import { SupabaseClient } from "@supabase/supabase-js"
+import { Session, SupabaseClient } from "@supabase/supabase-js"
 import { useRouter } from "next/router"
 import React, { CSSProperties, useEffect, useRef, useState } from "react"
 
@@ -8,68 +8,65 @@ import { Alert, Button, cn, Divider, Form, Input, Link } from "@nextui-org/react
 import { authProviders } from "./auth-providers"
 import { useIsHydrated } from "./use-is-hydrated"
 
-/**
- * @typedef {Object} AuthLocalization
- * @property {string} [header_text_login="Log In"]
- * @property {string} [header_text_signup="Sign Up"]
- * @property {string} [header_text_forgot_password="Forgot Password"]
- * @property {string} [header_text_update_password="Update Password"]
- * @property {string} [email_label="Email Address"]
- * @property {string} [password_label="Password"]
- * @property {string} [email_placeholder]
- * @property {string} [password_placeholder]
- * @property {string} [button_label_login="Log In"]
- * @property {string} [button_label_signup="Sign Up"]
- * @property {string} [button_label_forgot_password="Send Reset Password Link"]
- * @property {string} [button_label_update_password="Update Password"]
- * @property {string} [button_label_magic_link="Send Magic Link"]
- * @property {string} [forgot_password_link="Forgot password?"]
- * @property {string} [or_text="OR"]
- * @property {string} [provider_label="Continue with"]
- * @property {string} [email_provider_text="Email"]
- * @property {string} [password_provider_text="Password"]
- * @property {string} [footer_text_login="Already have an account?"]
- * @property {string} [footer_text_signup="Need to create an account?"]
- * @property {string} [footer_link_login="Log In"]
- * @property {string} [footer_link_signup="Sign Up"]
- * @property {string} [email_confirmation_text="Check your email for the confirmation link"]
- * @property {string} [email_reset_password_text="Check your email for the password reset link]
- * @property {string} [email_magic_link_text="Check your email for the magic link"]
- * @property {string} [error_email_text="Enter a valid email"]
- * @property {string} [error_password_text="Enter a valid password"]
- */
+interface AuthLocalization {
+    header_text_login?: string
+    header_text_signup?: string
+    header_text_forgot_password?: string
+    header_text_update_password?: string
+    email_label?: string
+    password_label?: string
+    email_placeholder?: string
+    password_placeholder?: string
+    button_label_login?: string
+    button_label_signup?: string
+    button_label_forgot_password?: string
+    button_label_update_password?: string
+    button_label_magic_link?: string
+    forgot_password_link?: string
+    or_text?: string
+    provider_label?: string
+    email_provider_text?: string
+    password_provider_text?: string
+    footer_text_login?: string
+    footer_text_signup?: string
+    footer_link_login?: string
+    footer_link_signup?: string
+    email_confirmation_text?: string
+    email_reset_password_text?: string
+    email_magic_link_text?: string
+    error_email_text?: string
+    error_password_text?: string
+}
 
-/**
- * @typedef {Object} AuthClassNames
- * @property {string} [container]
- * @property {string} [header]
- * @property {string} [form]
- * @property {string} [input]
- * @property {string} [button_submit]
- * @property {string} [link]
- * @property {string} [alert_error]
- * @property {string} [alert_success]
- * @property {string} [divider]
- * @property {string} [button_provider]
- * @property {string} [footer]
- */
+interface AuthClassNames {
+    container?: string
+    header?: string
+    form?: string
+    input?: string
+    button_submit?: string
+    link?: string
+    alert_error?: string
+    alert_success?: string
+    divider?: string
+    button_provider?: string
+    footer?: string
+}
 
-/**
- * @typedef {Object} AuthStyles
- * @property {CSSProperties} [container]
- * @property {CSSProperties} [header]
- * @property {CSSProperties} [form]
- * @property {CSSProperties} [input]
- * @property {CSSProperties} [button_submit]
- * @property {CSSProperties} [link]
- * @property {CSSProperties} [alert_error]
- * @property {CSSProperties} [alert_success]
- * @property {CSSProperties} [divider]
- * @property {CSSProperties} [button_provider]
- * @property {CSSProperties} [footer]
- */
+interface AuthStyles {
+    container?: CSSProperties
+    header?: CSSProperties
+    form?: CSSProperties
+    input?: CSSProperties
+    button_submit?: CSSProperties
+    link?: CSSProperties
+    alert_error?: CSSProperties
+    alert_success?: CSSProperties
+    divider?: CSSProperties
+    button_provider?: CSSProperties
+    footer?: CSSProperties
+}
 
-export const defaultLocalization = {
+export const defaultLocalization: AuthLocalization = {
     header_text_login: "Log In",
     header_text_signup: "Sign Up",
     header_text_forgot_password: "Forgot Password",
@@ -99,9 +96,29 @@ export const defaultLocalization = {
     error_password_text: "Enter a valid password",
 }
 
+
+interface AuthProps {
+    supabaseClient: SupabaseClient
+    socialLayout?: "horizontal" | "vertical"
+    asCard?: boolean
+    defaultRedirectTo?: string
+    redirectTo?: string
+    magicLink?: boolean
+    emailPassword?: boolean
+    startWithMagicLink?: boolean
+    isRoutingEnabled?: boolean
+    initialView?: "login" | "signup" | "forgot-password" | "update-password"
+    providers?: ("apple" | "azure" | "bitbucket" | "discord" | "facebook" | "figma" | "github" | "gitlab" | "google" | "kakao" | "keycloak" | "linkedin" | "notion" | "twitch" | "twitter" | "slack" | "spotify" | "workos" | "zoom")[]
+    localization?: AuthLocalization
+    baseUrl?: string
+    className?: string
+    style?: CSSProperties
+    classNames?: AuthClassNames
+    styles?: AuthStyles
+    color?: "primary" | "secondary" | "success" | "warning" | "default"
+}
+
 /**
- * Auth component
- * @param {Object} props
  * @param {SupabaseClient} props.supabaseClient - Supabase client
  * @param {("horizontal" | "vertical")} [props.socialLayout="vertical"] - Social providers layout
  * @param {boolean} [props.asCard=true] - Render as Card
@@ -119,15 +136,14 @@ export const defaultLocalization = {
  * @param {CSSProperties} [props.style] - Container style
  * @param {AuthClassNames} [props.classNames={}] - Class names for different elements
  * @param {AuthStyles} [props.styles={}] - Styles for different elements
- * @param {("primary" | "secondary" | "success" | "warning" | "error" | "default" | "info")} [props.color="primary"] - Button color
- * @returns {JSX.Element}
+ * @param {("primary" | "secondary" | "success" | "warning" | "default" )} [props.color="primary"] - Button color
  */
 export function Auth({
     supabaseClient,
     socialLayout = "vertical",
     asCard = true,
     defaultRedirectTo = "/",
-    redirectTo = null,
+    redirectTo,
     magicLink = true,
     emailPassword = true,
     startWithMagicLink = false,
@@ -136,23 +152,23 @@ export function Auth({
     providers = [],
     localization = {},
     baseUrl = "",
-    className = null,
-    style = null,
+    className,
+    style,
     classNames = {},
     styles = {},
     color = "primary"
-}) {
+}: AuthProps) {
     localization = { ...defaultLocalization, ...localization }
 
     const router = useRouter()
-    const [view, setView] = useState(isRoutingEnabled ? router.pathname.split("/")[1] : initialView)
-    const [session, setSession] = useState(null)
+    const [view, setView] = useState<"login" | "signup" | "forgot-password" | "update-password">(isRoutingEnabled ? router.pathname.split("/")[1] as "login" | "signup" | "forgot-password" | "update-password" : initialView)
+    const [session, setSession] = useState<Session | null>(null)
     const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState(null)
-    const [successMessage, setSuccessMessage] = useState(null)
+    const [error, setError] = useState<Error | null | undefined>(null)
+    const [successMessage, setSuccessMessage] = useState<string | null | undefined>()
     const [isMagicLink, setIsMagicLink] = useState(startWithMagicLink || !emailPassword)
     const emailInput = useRef(null)
-    const passwordInput = useRef(null)
+    const passwordInput = useRef<HTMLInputElement>(null)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [isVisible, setIsVisible] = React.useState(false)
@@ -165,7 +181,7 @@ export function Auth({
         "update-password": localization.button_label_update_password,
     }
 
-    const currentRedirectTo = redirectTo || router.query.redirect_to || defaultRedirectTo
+    const currentRedirectTo = redirectTo || router.query.redirect_to as string || defaultRedirectTo
 
     // Get and watch changes to the session
     useEffect(() => {
@@ -194,7 +210,8 @@ export function Auth({
     // Set the view based on the current router path
     useEffect(() => {
         if (isRoutingEnabled && view != router.pathname.split("/")[1]) {
-            setView(router.pathname.split("/")[1])
+            const view = router.pathname.split("/")[1] as "login" | "signup" | "forgot-password" | "update-password"
+            setView(view)
         }
     }, [router.pathname])
 
@@ -230,7 +247,7 @@ export function Auth({
     }, [magicLink, startWithMagicLink, emailPassword])
 
     // Handle the form submission
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
         setError(null)
@@ -287,7 +304,7 @@ export function Auth({
             className,
             classNames?.container
         )} style={{ ...style, ...styles?.container }}>
-            <style global="true" jsx="true">{`
+            <style>{`
                 input:-webkit-autofill-and-obscured,
                 input:-webkit-autofill-strong-password,
                 input:-webkit-autofill-strong-password-viewable,
@@ -297,7 +314,7 @@ export function Auth({
             `}</style>
 
             <p className={cn("text-xl font-medium ms-1", classNames?.header)} style={styles?.header}>
-                {localization[`header_text_${view.replaceAll("-", "_")}`]}
+                {localization[`header_text_${view.replaceAll("-", "_")}` as keyof AuthLocalization]}
             </p>
 
             <Form
@@ -324,7 +341,7 @@ export function Auth({
                     onKeyDown={(e) => {
                         if (e.key == "Enter" && !isMagicLink) {
                             e.preventDefault()
-                            passwordInput.current.focus()
+                            passwordInput.current?.focus()
                         }
                     }}
                     variant="bordered"
@@ -345,7 +362,7 @@ export function Auth({
                     enterKeyHint={view == "update-password" ? "send" : "go"}
                     errorMessage={localization.error_password_text}
                     validate={(value) =>
-                        !value?.length && localization.error_password_text
+                        !value?.length && localization.error_password_text || null
                     }
                     isDisabled={!emailPassword || isMagicLink || view == "update-password"}
                     className={cn(
@@ -357,7 +374,7 @@ export function Auth({
                     label={localization.password_label}
                     placeholder={localization.password_placeholder}
                     autoComplete={isMagicLink ? "off" : ["signup", "update-password"].includes(view) ? "new-password" : "new-password"}
-                    name={isMagicLink ? null : "password"}
+                    name={isMagicLink ? "" : "password"}
                     value={isMagicLink ? "" : password}
                     onValueChange={setPassword}
                     type={(isMagicLink || (isVisible && view == "signup")) ? "text" : "password"}
@@ -400,7 +417,7 @@ export function Auth({
                     isDisabled={!!session && view != "update-password"}
                     className={cn(classNames?.button_submit)}
                     style={styles?.button_submit}
-                    onPressStart={(e) => e.target.click()}
+                    onPressStart={(e) => (e.target as HTMLButtonElement).click()}
                 >
                     {viewActions[view]}
                 </Button>
@@ -487,9 +504,9 @@ export function Auth({
                         className={cn(
                             (!emailPassword || !isMagicLink) && "opacity-0 translate-y-3 -mt-2 !h-0 overflow-hidden",
                             "transition-all",
-                            classNames?.provider
+                            classNames?.button_provider
                         )}
-                        style={styles?.provider}
+                        style={styles?.button_provider}
                     >
                         {localization.provider_label}
 
@@ -506,8 +523,8 @@ export function Auth({
                                     startContent={authProviders[provider].icon}
                                     variant="flat"
                                     onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
-                                    className={classNames?.provider}
-                                    style={styles?.provider}
+                                    className={classNames?.button_provider}
+                                    style={styles?.button_provider}
                                 >
                                     {localization.provider_label}
 
@@ -526,8 +543,8 @@ export function Auth({
                                 <Button
                                     key={provider}
                                     variant="flat"
-                                    className={cn("min-w-0", classNames?.provider)}
-                                    style={styles?.provider}
+                                    className={cn("min-w-0", classNames?.button_provider)}
+                                    style={styles?.button_provider}
                                     fullWidth
                                     onPress={() => supabaseClient.auth.signInWithOAuth({ provider })}
                                 >
