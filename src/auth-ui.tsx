@@ -8,7 +8,7 @@ import { Alert, Button, cn, Divider, Form, Input, Link } from "@nextui-org/react
 import { authProviders } from "./auth-providers"
 import { useIsHydrated } from "./use-is-hydrated"
 
-interface AuthLocalization {
+export interface AuthLocalization {
     header_text_login?: string
     header_text_signup?: string
     header_text_forgot_password?: string
@@ -36,9 +36,10 @@ interface AuthLocalization {
     email_magic_link_text?: string
     error_email_text?: string
     error_password_text?: string
+    [key: string]: string | undefined
 }
 
-interface AuthClassNames {
+export interface AuthClassNames {
     container?: string
     header?: string
     form?: string
@@ -52,7 +53,7 @@ interface AuthClassNames {
     footer?: string
 }
 
-interface AuthStyles {
+export interface AuthStyles {
     container?: CSSProperties
     header?: CSSProperties
     form?: CSSProperties
@@ -97,7 +98,7 @@ export const defaultLocalization: AuthLocalization = {
 }
 
 
-interface AuthProps {
+export interface AuthProps {
     supabaseClient: SupabaseClient
     socialLayout?: "horizontal" | "vertical"
     asCard?: boolean
